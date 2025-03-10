@@ -115,6 +115,8 @@ int main(void)
     {
         CY_ASSERT(0);
     }
+	
+    cyhal_syspm_lock_deepsleep();
 
     /* Enable global interrupts */
     __enable_irq();

@@ -384,6 +384,7 @@ Document title: *CE240259* - *Bluetooth&reg; mtb-example-btstack-threadx-audio-w
  Version | Description of change
  ------- | ---------------------
  1.0.0   | New code example
+ 1.0.1   | Update library mtb-hal-cat5 ver to 1.2.0 and btsdk-audio ver to 4.9.1
 <br>
 
 
