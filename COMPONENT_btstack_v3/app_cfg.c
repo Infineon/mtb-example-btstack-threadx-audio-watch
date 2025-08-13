@@ -111,6 +111,12 @@
 #define AUDIO_CODEC_BUFFER_SIZE     0x2000
 #endif
 
+#if defined(WICED_APP_PANU_INCLUDED) || defined(WICED_APP_PANNAP_INCLUDED)
+#define BR_L2CAP_RX_MTU_SIZE 1691
+#else
+#define BR_L2CAP_RX_MTU_SIZE 1024
+#endif
+
 const uint8_t pincode[WICED_PIN_CODE_LEN] = { 0x30, 0x30, 0x30, 0x30 };
 
 /*****************************************************************************
@@ -133,7 +139,7 @@ const wiced_bt_cfg_l2cap_application_t wiced_bt_cfg_l2cap_app = /* Application m
 const wiced_bt_cfg_br_t wiced_bt_cfg_br =
 {
     .br_max_simultaneous_links = 3,
-    .br_max_rx_pdu_size = 1024,
+    .br_max_rx_pdu_size = BR_L2CAP_RX_MTU_SIZE,
     .device_class = {0x20, 0x07, 0x04},                     /**< Local device class */
 
     .rfcomm_cfg = /* RFCOMM configuration */
@@ -174,7 +180,6 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
     .p_isoc_cfg = &wiced_bt_cfg_isoc,
     .p_l2cap_app_cfg = &wiced_bt_cfg_l2cap_app,
 };
-
 
 #ifdef WICED_APP_AUDIO_SRC_INCLUDED
 #define SLEN_A2DP_SRC   (56 + 2)

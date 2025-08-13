@@ -65,8 +65,6 @@
 #define AUDIO_SRC_FEATURE_I2S_INPUT (1 << 0)
 #define AUDIO_SRC_FEATURE_MP3_FORMAT (1 << 1)
 
-#define AV_CTRL_MTU                 L2CAP_MTU_SIZE
-#define AV_DATA_MTU                 L2CAP_MTU_SIZE
 #define AV_RET_TOUT                 4
 #define AV_SIG_TOUT                 4
 #define AV_IDLE_TOUT                10

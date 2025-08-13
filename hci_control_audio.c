@@ -436,7 +436,7 @@ const char *dump_state_name(AV_STATE state)
         CASE_RETURN_STR(AV_STATE_DISCONNECTING)     /* Disconnecting */
     }
 #endif
-    return NULL;
+    return "No_State";
 }
 
 const char *dump_stream_state_name(AV_STREAM_STATE state)
@@ -450,7 +450,7 @@ const char *dump_stream_state_name(AV_STREAM_STATE state)
         CASE_RETURN_STR(AV_STREAM_STATE_STOPPING)
     }
 #endif
-    return NULL;
+    return "No_Stream_state";
 }
 
 const char *dump_avdt_event_name(int event)
@@ -482,7 +482,7 @@ const char *dump_avdt_event_name(int event)
         CASE_RETURN_STR(AVDT_DELAY_REPORT_CFM_EVT)   /* 21   Delay report response received */
     }
 #endif
-    return NULL;
+    return "No_AVDT_EVENT";
 }
 
 
@@ -688,6 +688,8 @@ static void av_app_getcap_cmpl( uint8_t handle, BD_ADDR bd_addr, uint8_t event, 
             av_app_cb.av_sep_info[i].seid = seid;
             av_app_cb.av_sep_info[i].caps_already_updated = WICED_TRUE;
 
+            /* fix reconnect bug */
+            av_app_cb.sep_configured_for_streaming = av_app_cb.sep_info_idx;
             /* Save the codec information to the control block */
             memcpy(&av_app_cb.av_sep_info[i].peer_caps,
                    p_data->getcap_cfm.p_cfg,
@@ -1329,7 +1331,13 @@ static void av_app_proc_stream_evt( uint8_t handle, BD_ADDR bd_addr, uint8_t eve
         {
             /* If the connect indication comes through here, the connect is initiated from the remote */
             av_app_cb.is_accepter = WICED_TRUE;
-
+            /* If SDP in progress, stop and deallocate memory, fix av connect and reconnect at the same time */
+            if (av_app_cb.p_sdp_db != NULL)
+            {
+                wiced_bt_sdp_cancel_service_search(av_app_cb.p_sdp_db);
+                wiced_bt_free_buffer(av_app_cb.p_sdp_db);
+                av_app_cb.p_sdp_db = NULL;
+            }
             /* Do SDP to get peer version info */
             if ( av_app_initiate_sdp(bd_addr) != WICED_SUCCESS)
             {

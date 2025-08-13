@@ -187,13 +187,14 @@ APPLICATION_START()
         return;
     }
 
+#if defined(WICED_APP_HFP_HF_INCLUDED) || defined(WICED_APP_HFP_AG_INCLUDED) || defined(WICED_APP_AUDIO_SRC_INCLUDED)
     result = wiced_audio_buffer_initialize(wiced_bt_audio_buf_config);
     if (WICED_SUCCESS != result)
     {
         WICED_BT_TRACE("ERROR audio_buffer_init %u\n", result);
         return;
     }
-
+#endif
 #ifdef WICED_APP_LE_INCLUDED
     hci_control_le_init();
 #endif
@@ -477,7 +478,20 @@ wiced_result_t btm_event_handler(wiced_bt_management_evt_t event, wiced_bt_manag
                     index = 0;
                 else
                     index++;
+#if BTSTACK_VER >= 0x04000000
+                {
+                    wiced_bt_ble_pref_conn_params_t params;
+
+                    params.conn_interval_min = 108;
+                    params.conn_interval_max = 108 + 12 * index;
+                    params.conn_latency = 0;
+                    params.conn_supervision_timeout = 600;
+
+                    wiced_bt_l2cap_update_ble_conn_params(p_event_data->ble_connection_param_update.bd_addr, &params);
+                }
+#else
                 wiced_bt_l2cap_update_ble_conn_params( p_event_data->ble_connection_param_update.bd_addr, 108, 108 + 12*index, 0, 600 );
+#endif
             }
             break;
 #endif

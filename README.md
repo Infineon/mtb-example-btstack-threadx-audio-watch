@@ -1,7 +1,7 @@
 # Watch app
 
 ## Overview
-This app demonstrates Bluetooth&#174; A2DP source, AVRCP Controller/Target, Apple Media Service (AMS), Apple Notification Center Service (ANCS), and HFP Audio Gateway/Hands-free Unit.
+This app demonstrates Bluetooth&#174; A2DP source, AVRCP Controller/Target, Apple Media Service (AMS), Apple Notification Center Service (ANCS), HFP Audio Gateway/Hands-free Unit and Personal Area Network User.
 
 Features demonstrated:
 
@@ -13,6 +13,7 @@ Features demonstrated:
  - SDP and GATT descriptor/attribute configuration
  - AIROC&#8482; SCO/RFCOMM initiator APIs and HFP Audio Gateway role
  - HFP Hands-free Unit role
+ - Personal Area Network User role
 
 
 ## Requirements
@@ -271,6 +272,19 @@ HFP Hands-free Unit:
       - Add held to the conversation (Note: This functionality depends on the support from telecom network operator. AG always supports this feature and responds with OK.)
    -  Mic / Speaker gain control
 
+
+Personal Area Network User:
+
+- Build with "PANU\_Support=1" to enable PANU. 
+- The Watch app can demonstrate how to use PAN user profile as shown below.
+- Make an PANNAP device (phone) discoverable and pairable by its specific behavior.
+- In ClientControl, click on the "Start" button from the "BR/EDR Discovery" combo box to find the PANNAP device.
+- Select the peer device in the BR/EDR Discovery combo box.
+- Click the "Connect" button under the ClientControl PAN tab.
+- To get the complete network access, ClientControl need to run in Linux and have root permission
+- After PANU conncted, run dhclient to get IP address and check if IP address have been allocated by PANNAP.
+- Click the "Disonnect" button under the ClientControl PAN tab to close PANU network.
+
 ### Application Settings
 Application-specific settings are as shown below:
 
@@ -384,7 +398,8 @@ Document title: *CE240259* - *Bluetooth&reg; mtb-example-btstack-threadx-audio-w
  Version | Description of change
  ------- | ---------------------
  1.0.0   | New code example
- 1.0.1   | Update library mtb-hal-cat5 ver to 1.2.0 and btsdk-audio ver to 4.9.1
+ 1.0.1   | Update library HAL to 1.2.0 and btsdk-audio to 4.9.1
+ 1.0.2   | Add PANU profile
 <br>
 
 

@@ -70,6 +70,19 @@ CONFIG=Debug
 # If set to "true" or "1", display full command-lines when building.
 VERBOSE=
 
+DIRECT_LOAD=1
+
+#Device Address
+BT_DEVICE_ADDRESS?=default
+# To support PANU, BD_ADDR firt bit of first byte need to be 0
+#BT_DEVICE_ADDRESS?=54500A110002
+
+CY_APP_DEFINES += -DDEV_NAME=\"$(APP_NAME)\"
+CY_APP_DEFINES += -DAPP_CFG_BT_BLE_ISOC_HOST_TO_DEVICE_COUNT=1
+CY_APP_DEFINES += -DAPP_CFG_BT_BLE_ISOC_DEVICE_TO_HOST_COUNT=1
+CY_APP_DEFINES += -DAPP_CFG_BT_BLE_ISOC_DEVICE_TX_PDU_COUNT=1
+CY_APP_DEFINES += -DAPP_CFG_BT_BLE_ISOC_DEVICE_RX_PDU_COUNT=1
+CY_APP_DEFINES += -DAPP_CFG_BT_BLE_ISOC_DEVICE_PDU_RB_ELEMENT_COUNT=1
 
 ################################################################################
 # Advanced Configuration
@@ -127,11 +140,19 @@ ASFLAGS=
 # Additional / custom linker flags.
 LDFLAGS=
 
+#Flags that optimize the code and data size
+CFLAGS  += -ffunction-sections -fdata-sections
+LDFLAGS += -Wl,--gc-sections
+
 # Additional / custom libraries to link in to the application.
 LDLIBS=
 
 # Path to the linker script to use (if empty, use the default linker script).
+ifeq ($(DIRECT_LOAD), 2)
+LINKER_SCRIPT=./link/TOOLCHAIN_GCC_ARM/direct_load_ram_psram.ld
+else
 LINKER_SCRIPT=
+endif
 
 # Custom pre-build commands to run.
 PREBUILD=
@@ -174,7 +195,6 @@ CY_COMPILER_GCC_ARM_DIR=
 #
 # App features/defaults
 #
-#BT_DEVICE_ADDRESS?=55500A100002
 UART?=AUTO
 TRANSPORT?=UART
 A2DP_SRC_INCLUDED := 1
@@ -190,12 +210,7 @@ PANU_SUPPORT=0
 PANNAP_SUPPORT=0
 PAN_PTS_SUPPORT=0
 
-# PAN only supported on CYW920721M2EVK-01 currently
-ifeq (1,$(filter 1,$(PANU_SUPPORT) $(PANNAP_SUPPORT) $(PAN_PTS_SUPPORT)))
-ifneq ($(TARGET),CYW920721M2EVK-01)
-$(error PANU_INCLUDED PANNAP_INCLUDED and PAN_PTS_SUPPORT only supported on CYW920721M2EVK-01 TARGET)
-endif
-endif
+
 
 ifeq ($(PAN_PTS_SUPPORT), 1)
 PAN_PTS_INCLUDED := 1
@@ -359,7 +374,7 @@ COMPONENTS += nanopbuf
 endif
 
 ifneq ($(filter 1, $(PANU_INCLUDED) $(PANNAP_INCLUDED)), )
-COMPONENTS += pan_lib
+COMPONENTS += pan_btstackv3
 endif
 
 #
@@ -385,7 +400,11 @@ endif
 endif # TARGET
 
 ifeq ($(TARGET), $(filter %CYW955513EVK-01, $(TARGET)))
+ifneq ($(filter 1, $(PANU_INCLUDED) $(PANNAP_INCLUDED)), )
+CY_APP_DEFINES += -DAPP_CFG_DYNMEM_SIZE_4=1779
+else
 CY_APP_DEFINES += -DAPP_CFG_DYNMEM_SIZE_4=572
+endif
 CY_APP_DEFINES += -DCYW9BT_AUDIO
 CY_APP_DEFINES += -DNO_PUART_SUPPORT
 CY_APP_DEFINES += -DHCI_TRACE_OVER_TRANSPORT

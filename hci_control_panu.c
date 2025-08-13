@@ -58,12 +58,21 @@ void panu_hci_send_panu_event(uint16_t evt, uint16_t handle, panu_event_t *p_dat
     {
     case HCI_CONTROL_PANU_EVENT_OPEN:
         for ( i = 0; i < BD_ADDR_LEN; i++ )
+        {
             *p++ = p_data->open.bd_addr[BD_ADDR_LEN - 1 - i];
+        }
         break;
 
     case HCI_CONTROL_PANU_EVENT_CONNECTED:
         for ( i = 0; i < BD_ADDR_LEN; i++ )
+        {
             *p++ = p_data->conn.bd_addr[BD_ADDR_LEN - 1 - i];
+        }
+
+        for ( i = 0; i < BD_ADDR_LEN; i++ )
+        {
+            *p++ = p_data->conn.local_bdaddr[i];
+        }
         break;
 
     case HCI_CONTROL_PANU_EVENT_SERVICE_NOT_FOUND:
@@ -81,11 +90,15 @@ void panu_hci_send_panu_event(uint16_t evt, uint16_t handle, panu_event_t *p_dat
 
 void panu_connected(BD_ADDR bd_addr)
 {
+    wiced_bt_device_address_t local_bda;    
+    panu_connect_t    connect;
+
     pan_session_cb_t *p_scb = &sdp_panu_scb;
     p_scb->state = PANU_STATE_CONNECT;
 
-    panu_connect_t    connect;
+    wiced_bt_dev_read_local_addr(local_bda);
     utl_bdcpy( connect.bd_addr, bd_addr );
+    utl_bdcpy( connect.local_bdaddr, local_bda );
 
     panu_hci_send_panu_event( HCI_CONTROL_PANU_EVENT_CONNECTED, p_scb->app_handle, (panu_event_t *)&connect );
 }
@@ -141,13 +154,44 @@ static void panu_conn_state_cback(uint16_t handle, BD_ADDR bd_addr, tPAN_RESULT 
 static void panu_data_buf_ind_cback(uint16_t handle, BD_ADDR src, BD_ADDR dst, uint16_t protocol,
                                                     uint8_t *data_buf, uint16_t data_len, BOOLEAN ext, BOOLEAN forward)
 {
+    uint8_t *xmit_buf = NULL;
+    uint8_t *p = NULL;
+
     WICED_BT_TRACE("panu_data_buf_ind_cback handle = %d, BD_ADDR src = %B, BD_ADDR dst = %B \n", handle, src, dst);
     WICED_BT_TRACE("panu_data_buf_ind_cback protocol = %d, ext = %d, forward = %d, data_len = %d \n", protocol, ext, forward, data_len);
+
+    if ((xmit_buf = (uint8_t  *)wiced_bt_get_buffer(20 + data_len)) == NULL)
+    {
+        WICED_BT_TRACE( "panu_data_buf_ind_cback wiced_bt_get_buffer fail\n" );
+        return;
+    }
+    p = xmit_buf;
+
+    UINT16_TO_STREAM(p, handle);
+    BDADDR_TO_STREAM(p, src);
+    BDADDR_TO_STREAM(p, dst);
+    UINT16_TO_STREAM(p, protocol);
+    UINT16_TO_STREAM(p, data_len);
+    //UINT8_TO_STREAM(p, ext);
+    //UINT8_TO_STREAM(p, forward);
+
+    memcpy(p, data_buf, data_len);
+
+    wiced_transport_send_data(HCI_CONTROL_PANU_EVENT_RECV_DATA, xmit_buf, ( int ) data_len + 20);
+
+    wiced_bt_free_buffer(xmit_buf);
 }
 
 static void panu_data_flow_cb(uint16_t handle, tPAN_RESULT result)
 {
+    uint8_t data[3] = {0};
+    uint8_t *p = data;
+
     WICED_BT_TRACE("panu_data_flow_cb handle:0x%x, result:0x%x \n", handle, result);
+    UINT16_TO_STREAM(p, handle);
+    data[2] = (result == PAN_TX_FLOW_ON)?1:0;
+
+    wiced_transport_send_data(HCI_CONTROL_PANU_EVENT_TX_FLOW_CB, data, sizeof(data));
 }
 
 static void panu_pfilt_ind_cback(uint16_t handle, BOOLEAN indication,tBNEP_RESULT result,
@@ -204,6 +248,40 @@ void hci_control_panu_handle_command(uint16_t opcode, uint8_t* p_data, uint32_t 
         handle = p[0] | ( p[1] << 8 );
         wiced_bt_panu_disconnect(handle);
         break;
+
+    case HCI_CONTROL_PANU_COMMAND_SEND_DATA:
+    {
+        uint16_t handle = 0;
+        BD_ADDR dst, src;
+        uint16_t protocol = 0;
+        BOOLEAN ext = 0;
+        uint16_t data_len = p[17] | (p[18] << 8);
+
+        BT_HDR  *xmit_buf = NULL;
+        uint8_t *p_buf = NULL;
+
+        STREAM_TO_UINT16(handle, p);
+        STREAM_TO_BDADDR(dst, p);
+        STREAM_TO_BDADDR(src, p);
+        STREAM_TO_UINT16(protocol, p);
+        STREAM_TO_UINT16(data_len, p);
+
+        WICED_BT_TRACE("HCI_CONTROL_PANU_COMMAND_SEND_DATA handle = %d, BD_ADDR src = %B, BD_ADDR dst = %B \n", handle, src, dst);
+        WICED_BT_TRACE("HCI_CONTROL_PANU_COMMAND_SEND_DATA protocol = %d, ext = %d, data_len = %d \n", protocol, ext,  data_len);
+
+        if ((xmit_buf = (BT_HDR  *)wiced_bt_get_buffer(sizeof(BT_HDR) + data_len + 28)) != NULL)
+        {
+            xmit_buf->len    = data_len;
+            xmit_buf->offset = 28;
+
+            p_buf = (uint8_t *)(xmit_buf + 1) + xmit_buf->offset;
+            memcpy(p_buf, p, data_len);
+
+            wiced_bt_pan_writebuf(handle, dst, src, protocol, xmit_buf, ext);
+        }
+        panu_hci_send_panu_event( HCI_CONTROL_PANU_EVENT_SEND_DATA_COMP, handle, NULL );
+    }
+    break;
     }
 }
 
@@ -291,15 +369,7 @@ tAPP_PAN_MFILTER app_pan_mfilter3[] = {
             { 0x03, 0x00, 0x02, 0x30, 0x00, 0x08}},
 };
 
-void bdcpy(BD_ADDR a, const BD_ADDR b)
-{
-    int i;
 
-    for (i = BD_ADDR_LEN; i != 0; i--)
-    {
-        *a++ = *b++;
-    }
-}
 void hci_control_panu_set_mfilter(uint16_t handle)
 {
     uint8_t i;
@@ -356,8 +426,8 @@ void hci_control_panu_set_mfilter(uint16_t handle)
     q = (BD_ADDR*)&mfilter.data[mfilter.num_filter];
     for (j = 0; j < mfilter.num_filter; j++)
     {
-        bdcpy((uint8_t *)(p++), app_pan_mfilter3[j].start);
-        bdcpy((uint8_t *)(q++), app_pan_mfilter3[j].end);
+        utl_bdcpy((uint8_t *)(p++), app_pan_mfilter3[j].start);
+        utl_bdcpy((uint8_t *)(q++), app_pan_mfilter3[j].end);
     }
     wiced_bt_pan_set_multicast_filters(mfilter.handle, mfilter.num_filter,
         (uint8_t *)mfilter.data, (uint8_t *)(mfilter.data + mfilter.num_filter));

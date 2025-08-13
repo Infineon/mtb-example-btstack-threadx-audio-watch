@@ -149,7 +149,7 @@ void hci_control_le_scan_result_cback( wiced_bt_ble_scan_results_t *p_scan_resul
 {
     if ( p_scan_result )
     {
-        WICED_BT_TRACE( " Device : %B\n", p_scan_result->remote_bd_addr );
+        WICED_BT_TRACE( " Device : %B Type: %d\n", p_scan_result->remote_bd_addr, p_scan_result->ble_evt_type );
         hci_control_le_send_advertisement_report( p_scan_result, p_adv_data );
     }
     else
@@ -252,7 +252,19 @@ wiced_result_t hci_control_le_connection_up( wiced_bt_gatt_connection_status_t *
             index = 0;
         else
             index++;
+#if BTSTACK_VER >= 0x04000000
+        {
+            wiced_bt_ble_pref_conn_params_t params;
+
+            params.conn_interval_min = 108;
+            params.conn_interval_max = 108 + 12 * index;
+            params.conn_latency = 0;
+            params.conn_supervision_timeout = 600;
+            wiced_bt_l2cap_update_ble_conn_params(p_status->bd_addr, &params);
+        }
+#else
         wiced_bt_l2cap_update_ble_conn_params( p_status->bd_addr, 108, 108 + 12*index, 0, 600 );
+#endif
 #endif
 #endif
     }

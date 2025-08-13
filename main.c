@@ -46,6 +46,7 @@
 #include "cy_retarget_io.h"
 #include "wiced_bt_trace.h"
 #include "wiced_bt_dev.h"
+#include "wiced_timer.h"
 #ifdef HCI_TRACE_OVER_TRANSPORT
 #include "wiced_transport.h"
 #include "wiced_hal_puart.h"
@@ -115,7 +116,7 @@ int main(void)
     {
         CY_ASSERT(0);
     }
-	
+
     cyhal_syspm_lock_deepsleep();
 
     /* Enable global interrupts */
@@ -125,11 +126,11 @@ int main(void)
     wiced_hci_trace_enable();
 #endif
 
+    APPLICATION_START();
+
     WICED_BT_TRACE( "#############################\n" );
     WICED_BT_TRACE( "# Audio_Watch APP START #\n" );
     WICED_BT_TRACE( "#############################\n" );
-
-    APPLICATION_START();
 
     return 0;
 }

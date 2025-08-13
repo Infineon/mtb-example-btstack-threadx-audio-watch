@@ -253,6 +253,7 @@
 #if (defined(COMPONENT_55500A1) && defined (CYHAL_SLEEP_SUPPORTED) && (CYHAL_SLEEP_SUPPORTED == WICED_TRUE))
 #include "cyhal_syspm.h"
 #endif
+#include "btss_system.h"
 
 /*****************************************************************************
 **  Constants
@@ -342,7 +343,9 @@ wiced_timer_t hci_control_app_timer;
 void hci_control_timeout( TIMER_PARAM_TYPE count )
 {
     WICED_BT_TRACE("Idle Timeout.\n");
-
+#ifdef USE_PSRAM
+    btss_smif_psram_allowLowPowerMode(BTSS_SYSTEM_PSRAM_LOW_POWER_ALLOW_BTSS_CONTROL);
+#endif
     cyhal_syspm_unlock_deepsleep();
 }
 
@@ -408,7 +411,7 @@ void hci_control_post_init(void)
     hci_control_pannap_init();
 #endif
     // Disable while streaming audio over the uart.
-    wiced_bt_dev_register_hci_trace(hci_control_hci_packet_cback);
+    //wiced_bt_dev_register_hci_trace(hci_control_hci_packet_cback);
 
     // Creating a buffer pool for holding the peer devices's key info
     p_key_info_pool = app_create_pool( KEY_INFO_POOL_BUFFER_SIZE, KEY_INFO_POOL_BUFFER_COUNT );
@@ -657,10 +660,13 @@ void hci_control_hci_packet_cback( wiced_bt_hci_trace_type_t type, uint16_t leng
 #if (WICED_HCI_TRANSPORT == WICED_HCI_TRANSPORT_UART)
 #ifdef ENABLE_BLUETOOTH_HCI_TRACE
     // send the trace
+    if( length > 1000) 
+         length = 1000;
     app_transport_send_hci_trace(type, p_data, length);
 #endif
 #endif
 
+#ifdef WICED_APP_TEST_INCLUDED
     if ( !test_command.test_executing )
         return;
 
@@ -669,6 +675,7 @@ void hci_control_hci_packet_cback( wiced_bt_hci_trace_type_t type, uint16_t leng
     {
         hci_control_handle_hci_test_event( p_data, length );
     }
+#endif
 }
 
 #ifdef WICED_APP_AMS_INCLUDED

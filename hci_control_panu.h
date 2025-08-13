@@ -46,6 +46,7 @@ typedef struct
 typedef struct
 {
     BD_ADDR             bd_addr;
+    BD_ADDR             local_bdaddr;
 } panu_connect_t;
 
 typedef union
