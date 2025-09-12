@@ -400,6 +400,7 @@ Document title: *CE240259* - *Bluetooth&reg; mtb-example-btstack-threadx-audio-w
  1.0.0   | New code example
  1.0.1   | Update library HAL to 1.2.0 and btsdk-audio to 4.9.1
  1.0.2   | Add PANU profile
+ 1.0.3   | Resolve build error
 <br>
 
 
