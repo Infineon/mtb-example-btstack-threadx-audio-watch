@@ -7,8 +7,8 @@
 #
 ################################################################################
 # \copyright
-# Copyright 2018-2025, Cypress Semiconductor Corporation (an Infineon company)
-# SPDX-License-Identifier: Apache-2.0
+# (c) 2018-2026, Infineon Technologies AG, or an affiliate of Infineon
+# Technologies AG.  SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -399,7 +399,7 @@ CY_APP_DEFINES += -DWICED_BT_HFP_HF_WBS_INCLUDED=TRUE
 endif
 endif # TARGET
 
-ifeq ($(TARGET), $(filter %CYW955513EVK-01, $(TARGET)))
+ifeq ($(TARGET), $(filter %CYW955513EVK-01 %KIT-CYW55310-EVAL, $(TARGET)))
 ifneq ($(filter 1, $(PANU_INCLUDED) $(PANNAP_INCLUDED)), )
 CY_APP_DEFINES += -DAPP_CFG_DYNMEM_SIZE_4=1779
 else
@@ -438,8 +438,11 @@ ifeq ($(SUPPORT_MXTDM), 1)
 CY_APP_DEFINES+=-DSUPPORT_MXTDM
 endif
 
-ifeq ($(CYHAL_SLEEP_SUPPORT), 1)
+# Irrespective of CYHAL_SLEEP_SUPPORT flag, default sleep will be enabled for CYW955513EVK-01 and KIT-CYW55310-EVAL internally.
+# So, enable the below flag for sleep disabled as well.
 CY_APP_DEFINES += -DCYHAL_SYSPM_WITH_TRANSPORT_MODE
+
+ifeq ($(CYHAL_SLEEP_SUPPORT), 1)
 CY_APP_DEFINES += -DCYHAL_SLEEP_SUPPORTED=$(CYHAL_SLEEP_SUPPORT)
 endif
 endif # TARGET
