@@ -276,7 +276,7 @@ HFP Hands-free Unit:
 
 Personal Area Network User:
 
-- Build with "PANU\_Support=1" to enable PANU. 
+- Build with "PANU\_Support=1" to enable PANU.
 - The Watch app can demonstrate how to use PAN user profile as shown below.
 - Make an PANNAP device (phone) discoverable and pairable by its specific behavior.
 - In ClientControl, click on the "Start" button from the "BR/EDR Discovery" combo box to find the PANNAP device.
@@ -370,10 +370,87 @@ BT GPIO 17 (HAL) | mSPI                     | SPI interface for cs47l35 dsp (SPI
 LHL GPIO 8 (HAL) | mSPI                     | SPI interface for cs47l35 dsp (SPI MOSI)
 LHL GPIO 9 (HAL) | mSPI                     | SPI interface for cs47l35 dsp (SPI MISO)
 BT GPIO 16 (HAL) | mSPI                     | SPI interface for cs47l35 dsp (SPI CS)
-TDM2 SCK         |                          | tdm and i2s interface for cs47l35 dsp 
-TDM2 WS          |                          | tdm and i2s interface for cs47l35 dsp 
-TDM2 DO          |                          | tdm and i2s interface for cs47l35 dsp 
-TDM2 DI          |                          | tdm and i2s interface for cs47l35 dsp 
+TDM2 SCK         |                          | tdm and i2s interface for cs47l35 dsp
+TDM2 WS          |                          | tdm and i2s interface for cs47l35 dsp
+TDM2 DO          |                          | tdm and i2s interface for cs47l35 dsp
+TDM2 DI          |                          | tdm and i2s interface for cs47l35 dsp
+
+<br />
+
+### Profile configuration and memory constraints
+
+Due to memory constraints on the CYW955513 device, enabling too many Bluetooth&reg; profiles simultaneously can cause the DUT to crash or fail to boot. Each enabled profile increases RAM usage for buffers, GATT tables, and stack resources. The following Makefile flags control which profiles are compiled in:
+
+| Makefile flag | Default | Description |
+|:---|:---|:---|
+| `AVRCP_CT_INCLUDED` | `1` | AVRCP Controller |
+| `AVRCP_TG_INCLUDED` | `0` | AVRCP Target |
+| `HFP_HF_INCLUDED`   | `1` | HFP Hands-free Unit |
+| `HFP_AG_INCLUDED`   | `0` | HFP Audio Gateway |
+| `HCI_TEST_INCLUDED` | `0` | HCI Test commands |
+| `LE_INCLUDED`       | `1` | LE / GATT client |
+| `ANCS_INCLUDED`     | `1` | Apple Notification Center Service |
+| `AMS_INCLUDED`      | `1` | Apple Media Service |
+| `PANU_SUPPORT`      | `0` | Personal Area Network User |
+| `PANNAP_SUPPORT`    | `0` | PAN Network Access Point |
+
+> **Note:** `HFP_AG_INCLUDED` and `HFP_HF_INCLUDED` are mutually exclusive — enabling both simultaneously is not supported. `PANU_SUPPORT` and `PANNAP_SUPPORT` are also mutually exclusive.
+
+#### Recommended profile combinations
+
+Only one of the configurations below should be active at a time. Enabling profiles beyond what is listed for a given use case may exhaust available memory and cause the DUT to crash or not boot properly.
+
+**Default application configuration** (as shipped):
+
+```
+AVRCP_CT_INCLUDED=1
+AVRCP_TG_INCLUDED=0
+HFP_HF_INCLUDED=1
+HFP_AG_INCLUDED=0
+HCI_TEST_INCLUDED=0
+LE_INCLUDED=1
+ANCS_INCLUDED=1
+AMS_INCLUDED=1
+```
+
+> **Warning:** The default configuration already uses a significant portion of available RAM. Adding further profiles on top of the defaults is likely to cause instability.
+
+** Enabling AG **
+A2DP Src + HFP AG + AVRCP TG 
+
+```
+A2DP_SRC_INCLUDED=1
+AVRCP_CT_INCLUDED=0
+AVRCP_TG_INCLUDED=1
+HFP_HF_INCLUDED=0
+HFP_AG_INCLUDED=1
+HCI_TEST_INCLUDED=0
+LE_INCLUDED=0
+ANCS_INCLUDED=0
+AMS_INCLUDED=0
+```
+
+**Personal Area Network User (PANU):**
+
+To use PANU, disable LE-based profiles and HFP to free the required memory:
+
+```
+AVRCP_CT_INCLUDED=1
+PANU_SUPPORT=1
+HFP_HF_INCLUDED=0
+LE_INCLUDED=0
+ANCS_INCLUDED=0
+AMS_INCLUDED=0
+HCI_TEST_INCLUDED=0
+```
+
+> **Note:** When enabling `PANU_SUPPORT`, the BD address must have its first bit of the first byte set to 0. See the commented `BT_DEVICE_ADDRESS` example in the Makefile.
+
+These flags can be set either in the Makefile directly or passed on the command line, for example:
+
+```
+make AVRCP_CT_INCLUDED=1 LE_INCLUDED=1 ANCS_INCLUDED=1 AMS_INCLUDED=1 HFP_HF_INCLUDED=0 HCI_TEST_INCLUDED=0
+```
 
 <br />
 
@@ -402,7 +479,8 @@ Document title: *CE240259* - *Bluetooth&reg; mtb-example-btstack-threadx-audio-w
  1.0.1   | Update library HAL to 1.2.0 and btsdk-audio to 4.9.1
  1.0.2   | Add PANU profile
  1.0.3   | Resolve build error
- 1.1.0   | Support Added for KIT-CYW55310-EVAL kit
+ 1.1.0   | App update wrt btsdk-audio 4.9.6 and Support Added for KIT-CYW55310-EVAL kit
+ 1.2.0   | Updated wrt decoupling the btsdk assets.
 <br>
 
 

@@ -162,6 +162,7 @@
 /*******************************************************************************
  *                               Includes
  ******************************************************************************/
+#include "wiced_bt_avrc_ct.h"
 #include <string.h>
 #include <wiced_bt_gatt.h>
 #ifdef WICED_APP_AMS_INCLUDED
@@ -310,7 +311,7 @@ static void hci_control_handle_read_local_bda( void );
 static void hci_control_handle_user_confirmation( uint8_t *p_bda, uint8_t accept_pairing );
 static void hci_control_handle_read_buffer_stats( void );
 static void hci_control_send_device_started_evt( void );
-extern wiced_result_t wiced_bt_avrc_ct_cleanup( void );
+extern wiced_result_t wiced_bt_avrc_ct_deinit( void );
 extern uint8_t find_index_by_conn_id(uint16_t conn_id);
 #if (defined(SLEEP_SUPPORTED) && (SLEEP_SUPPORTED == WICED_TRUE))
 static void hci_control_sleep_configure(void);
@@ -1639,7 +1640,7 @@ void hci_control_switch_avrcp_role(uint8_t new_role)
 
         case AVRCP_CONTROLLER_ROLE:
             /* Shutdown the avrcp controller */
-            wiced_bt_avrc_ct_cleanup();
+            wiced_bt_avrc_ct_deinit();
 
             /* Initialize the avrcp target */
             hci_control_rc_target_init();

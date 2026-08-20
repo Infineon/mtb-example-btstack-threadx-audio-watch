@@ -53,13 +53,36 @@
 /******************************************************
  *               Variables Definitions
  ******************************************************/
-hfp_ag_session_cb_t  ag_scb[HCI_CONTROL_AG_NUM_SCB];
+wiced_bt_hfp_ag_session_cb_t  ag_scb[HCI_CONTROL_AG_NUM_SCB];
 
 
 /******************************************************
  *               Function Definitions
  ******************************************************/
 #if defined(CYW55500A1)
+static uint16_t wiced_bt_hfp_ag_event_to_hci_control_event( wiced_bt_hfp_ag_event_t evt )
+{
+    switch ( evt )
+    {
+    case WICED_BT_HFP_AG_EVENT_OPEN:
+        return HCI_CONTROL_AG_EVENT_OPEN;
+    case WICED_BT_HFP_AG_EVENT_CLOSE:
+        return HCI_CONTROL_AG_EVENT_CLOSE;
+    case WICED_BT_HFP_AG_EVENT_CONNECTED:
+        return HCI_CONTROL_AG_EVENT_CONNECTED;
+    case WICED_BT_HFP_AG_EVENT_AUDIO_OPEN:
+        return HCI_CONTROL_AG_EVENT_AUDIO_OPEN;
+    case WICED_BT_HFP_AG_EVENT_AUDIO_CLOSE:
+        return HCI_CONTROL_AG_EVENT_AUDIO_CLOSE;
+    case WICED_BT_HFP_AG_EVENT_AT_CMD:
+        return HCI_CONTROL_AG_EVENT_AT_CMD;
+    case WICED_BT_HFP_AG_EVENT_CLCC_REQ:
+        return HCI_CONTROL_AG_EVENT_CLCC_REQ;
+    default:
+        return 0;
+    }
+}
+
 /*
  * HF event callback. Format the data to be sent over the UART
  *
@@ -68,42 +91,49 @@ hfp_ag_session_cb_t  ag_scb[HCI_CONTROL_AG_NUM_SCB];
  *          2 bytes  handle
  *          n bytes  data depending on event code
  */
-void hci_control_hfp_ag_hci_send_ag_event( uint16_t evt, uint16_t handle, hfp_ag_event_t *p_data )
+void wiced_bt_hfp_ag_hci_send_ag_event( wiced_bt_hfp_ag_event_t evt, uint16_t handle, wiced_bt_hfp_ag_event_data_t *p_data )
 {
     uint8_t   tx_buf[300];
     uint8_t  *p = tx_buf;
+    uint16_t  event_opcode = wiced_bt_hfp_ag_event_to_hci_control_event( evt );
     int       i;
 
-    WICED_BT_TRACE("[%u]hfp_ag_hci_send_ag_event: Sending Event: %u  to UART\n", handle, evt);
+    if ( event_opcode == 0 )
+    {
+        WICED_BT_TRACE("[%u]hfp_ag_hci_send_ag_event: Unsupported Event: %u\n", handle, evt);
+        return;
+    }
+
+    WICED_BT_TRACE("[%u]hfp_ag_hci_send_ag_event: Sending Event: %u opcode:0x%04x to UART\n", handle, evt, event_opcode);
 
     *p++ = ( uint8_t ) ( handle );
     *p++ = ( uint8_t ) ( handle >> 8 );
 
     switch ( evt )
     {
-    case HCI_CONTROL_AG_EVENT_OPEN:       /* HS connection opened or connection attempt failed  */
+    case WICED_BT_HFP_AG_EVENT_OPEN:       /* HS connection opened or connection attempt failed  */
         for ( i = 0; i < BD_ADDR_LEN; i++ )
             *p++ = p_data->open.bd_addr[BD_ADDR_LEN - 1 - i];
         *p++ = p_data->open.status;
         break;
 
-    case HCI_CONTROL_AG_EVENT_CONNECTED: /* HS Service Level Connection is UP */
+    case WICED_BT_HFP_AG_EVENT_CONNECTED: /* HS Service Level Connection is UP */
         *p++ = ( uint8_t ) ( p_data->conn.peer_features );
         *p++ = ( uint8_t ) ( p_data->conn.peer_features >> 8 );
         break;
-    case HCI_CONTROL_AG_EVENT_AT_CMD:
+    case WICED_BT_HFP_AG_EVENT_AT_CMD:
         memcpy(p, p_data->at_cmd.cmd_ptr, p_data->at_cmd.cmd_len);
         p += p_data->at_cmd.cmd_len;
         break;
-    case HCI_CONTROL_AG_EVENT_AUDIO_OPEN:
-        *p++ = ( uint8_t ) (p_data->audio_open.wbs_supported);
-        *p++ = ( uint8_t ) (p_data->audio_open.wbs_used);
+    case WICED_BT_HFP_AG_EVENT_AUDIO_OPEN:
+        *p++ = ( uint8_t ) (p_data->audio_open.local_selected_codec);
+        *p++ = ( uint8_t ) (p_data->audio_open.peer_supported_codecs);
         break;
     default:                             /* Rest have no parameters */
         break;
     }
 
-    wiced_transport_send_data( evt, tx_buf, ( int ) ( p - tx_buf ) );
+    wiced_transport_send_data( event_opcode, tx_buf, ( int ) ( p - tx_buf ) );
 }
 #endif
 /*
@@ -111,11 +141,11 @@ void hci_control_hfp_ag_hci_send_ag_event( uint16_t evt, uint16_t handle, hfp_ag
  */
 void hci_control_ag_init( void )
 {
-    hfp_ag_session_cb_t *p_scb = &ag_scb[0];
+    wiced_bt_hfp_ag_session_cb_t *p_scb = &ag_scb[0];
     wiced_bt_dev_status_t result;
     int i;
 
-    memset( &ag_scb, 0, sizeof( hfp_ag_session_cb_t ) );
+    memset( &ag_scb, 0, sizeof( wiced_bt_hfp_ag_session_cb_t ) );
 
     for ( i = 0; i < HCI_CONTROL_AG_NUM_SCB; i++, p_scb++ )
     {
@@ -127,7 +157,7 @@ void hci_control_ag_init( void )
             p_scb->hf_profile_uuid = UUID_SERVCLASS_HEADSET;
     }
 #if defined(CYW55500A1)
-    hfp_ag_startup( &ag_scb[0], HCI_CONTROL_AG_NUM_SCB, BT_AUDIO_HFP_SUPPORTED_FEATURES, hci_control_hfp_ag_hci_send_ag_event );
+    wiced_bt_hfp_ag_startup( &ag_scb[0], HCI_CONTROL_AG_NUM_SCB, BT_AUDIO_HFP_SUPPORTED_FEATURES, wiced_bt_hfp_ag_hci_send_ag_event );
 #else
     hfp_ag_startup( &ag_scb[0], HCI_CONTROL_AG_NUM_SCB, BT_AUDIO_HFP_SUPPORTED_FEATURES);
 #endif
@@ -141,34 +171,36 @@ void hci_control_ag_handle_command( uint16_t opcode, uint8_t* p_data, uint32_t l
     uint16_t handle;
     uint8_t  hs_cmd;
     uint8_t  *p = ( uint8_t * ) p_data;
+    wiced_bt_device_address_t bd_addr;
 
     switch ( opcode )
     {
     case HCI_CONTROL_AG_COMMAND_CONNECT:
+        STREAM_TO_BDADDR( bd_addr, p );
         hci_control_switch_hfp_role( HFP_AUDIO_GATEWAY_ROLE );
-        hfp_ag_connect( p );
+        wiced_bt_hfp_ag_connect( bd_addr );
         break;
 
     case HCI_CONTROL_AG_COMMAND_DISCONNECT:
         handle = p[0] | ( p[1] << 8 );
-        hfp_ag_disconnect( handle );
+        wiced_bt_hfp_ag_disconnect( handle );
         break;
 
     case HCI_CONTROL_AG_COMMAND_OPEN_AUDIO:
         handle = p[0] | ( p[1] << 8 );
-        hfp_ag_audio_open( handle );
+        wiced_bt_hfp_ag_audio_open( handle );
         break;
 
     case HCI_CONTROL_AG_COMMAND_CLOSE_AUDIO:
         handle = p[0] | ( p[1] << 8 );
-        hfp_ag_audio_close( handle );
+        wiced_bt_hfp_ag_audio_close( handle );
         break;
     case HCI_CONTROL_AG_COMMAND_SET_CIND:
-        hfp_ag_set_cind((char *)&p[0], length);
+        wiced_bt_hfp_ag_set_cind((char *)&p[0], length);
         break;
     case HCI_CONTROL_AG_COMMAND_STR:
         handle = p[0] | ( p[1] << 8 );
-        hfp_ag_send_cmd_str(handle, &p[2], length-2);
+        wiced_bt_hfp_ag_send_cmd_str(handle, &p[2], length-2);
         break;
     default:
         WICED_BT_TRACE ( "hci_control_ag_handle_command - unkn own opcode: %u %u\n", opcode);

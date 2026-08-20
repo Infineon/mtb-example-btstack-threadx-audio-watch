@@ -12,7 +12,7 @@
         <Property id="MaxAttrLength" value="365"/>
         <Property id="RxPduSize" value="365"/>
         <Property id="MaxServersConnections" value="0"/>
-        <Property id="MaxClientsConnections" value="3"/>
+        <Property id="MaxClientsConnections" value="2"/>
     </GeneralProperties>
     <Profiles>
         <Profile name="GATT">

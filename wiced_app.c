@@ -509,7 +509,7 @@ wiced_result_t btm_event_handler(wiced_bt_management_evt_t event, wiced_bt_manag
 #ifdef WICED_APP_HFP_AG_INCLUDED
             if (hfp_profile_role == HFP_AUDIO_GATEWAY_ROLE)
             {
-                hfp_ag_sco_management_callback( event, p_event_data );
+                wiced_bt_hfp_ag_sco_management_callback( event, p_event_data );
             }
 #endif
 #ifdef WICED_APP_HFP_HF_INCLUDED

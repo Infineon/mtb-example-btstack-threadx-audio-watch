@@ -47,8 +47,10 @@
 #define __HCI_CONTROL_API_H
 
 /* Packet types */
-#define HCI_EVENT_PKT                                       4
 #define HCI_ACL_DATA_PKT                                    2
+#define HCI_SCO_DATA_PKT                                    3
+#define HCI_EVENT_PKT                                       4
+#define HCI_ISO_DATA_PKT                                    5
 #define HCI_WICED_PKT                                       25
 
 /* Group codes */

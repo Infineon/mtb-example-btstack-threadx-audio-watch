@@ -226,7 +226,7 @@ static void av_app_am_audio_stop(void);
 #endif
 
 #ifdef WICED_APP_AUDIO_RC_CT_INCLUDED
-extern wiced_result_t wiced_bt_avrc_ct_cleanup( void );
+extern wiced_result_t wiced_bt_avrc_ct_deinit( void );
 #endif
 
 wiced_timer_t hci_control_audio_conn_idle_timer;
@@ -1497,7 +1497,7 @@ static wiced_result_t av_app_disconnect_connection(void)
              * AVRC links for a cleanup environment */
             WICED_BT_TRACE("Unexpected AVRCP role:%d\n", avrcp_profile_role);
 #ifdef WICED_APP_AUDIO_RC_CT_INCLUDED
-            wiced_bt_avrc_ct_cleanup();
+            wiced_bt_avrc_ct_deinit();
 #endif
         }
     }

@@ -98,7 +98,7 @@ CY_APP_DEFINES += -DAPP_CFG_BT_BLE_ISOC_DEVICE_PDU_RB_ELEMENT_COUNT=1
 # ... then code in directories named COMPONENT_foo and COMPONENT_bar will be
 # added to the build
 #
-COMPONENTS=a2dp_sink_profile_btstack  audio_sink_route_config_lib btsdk-include btstack_v3  audiomanager cyw9bt_audio5
+COMPONENTS=a2dp_sink_profile_btstack  audio_sink_route_config_lib btsdk-include btstack_v3  audiomanager cyw9bt_audio5 a2dp_common_btstack
 
 # Like COMPONENTS, but disable optional code that was enabled by default.
 DISABLE_COMPONENTS=
@@ -197,12 +197,12 @@ CY_COMPILER_GCC_ARM_DIR=
 #
 UART?=AUTO
 TRANSPORT?=UART
-A2DP_SRC_INCLUDED := 1
-AVRCP_TG_INCLUDED := 1
+A2DP_SRC_INCLUDED := 0
+AVRCP_TG_INCLUDED := 0
 AVRCP_CT_INCLUDED := 1
 HFP_AG_INCLUDED ?= 0
 HFP_HF_INCLUDED ?= 1
-HCI_TEST_INCLUDED := 1
+HCI_TEST_INCLUDED := 0
 LE_INCLUDED := 1
 ANCS_INCLUDED ?= 1
 AMS_INCLUDED ?= 1
@@ -412,7 +412,7 @@ CY_APP_DEFINES += -DENABLE_BLUETOOTH_HCI_TRACE
 # Apply new Audio Profiles
 ifeq ($(AVRCP_CT_INCLUDED), 1)
 DISABLE_COMPONENTS += avrc_controller
-COMPONENTS += avrc_controller_btstack
+COMPONENTS += avrc_controller_btstack profiles_include_btstack
 endif
 
 ifeq ($(AVRCP_TG_INCLUDED), 1)
@@ -424,14 +424,14 @@ endif
 
 ifeq ($(HFP_HF_INCLUDED), 1)
 DISABLE_COMPONENTS += handsfree_profile
-COMPONENTS += handsfree_profile_btstack
+COMPONENTS += handsfree_profile_btstack profiles_include_btstack
 CY_APP_DEFINES += -DWICED_BT_HFP_HF_WBS_INCLUDED=TRUE
 SUPPORT_MXTDM = 1
 endif
 
 ifeq ($(HFP_AG_INCLUDED), 1)
 DISABLE_COMPONENTS += hfp_audio_gateway
-COMPONENTS += hfp_audio_gateway_btstack
+COMPONENTS += hfp_audio_gateway_btstack profiles_include_btstack
 endif
 
 ifeq ($(SUPPORT_MXTDM), 1)

@@ -295,7 +295,7 @@ const uint8_t wiced_app_cfg_sdp_record[] =
                 SDP_ATTR_UUID16( UUID_SERVCLASS_AG_HANDSFREE ),             // 3 bytes ServiceClass0 UUID_SERVCLASS_AG_HANDSFREE
                 SDP_ATTR_UUID16( UUID_SERVCLASS_GENERIC_AUDIO ),            // 3 bytes ServiceClass1 UUID_SERVCLASS_GENERIC_AUDIO
         SDP_ATTR_RFCOMM_PROTOCOL_DESC_LIST( 1 ),                            // 17 bytes ( SCN=1 )
-        SDP_ATTR_PROFILE_DESC_LIST( UUID_SERVCLASS_AG_HANDSFREE, 0x0108 ),  // 13 bytes UUID_SERVCLASS_HF_HANDSFREE, version 0x0105
+        SDP_ATTR_PROFILE_DESC_LIST( UUID_SERVCLASS_AG_HANDSFREE, 0x0109 ),  // 13 bytes UUID_SERVCLASS_HF_HANDSFREE, version 0x0109
         SDP_ATTR_UINT1(ATTR_ID_NETWORK, 0x00),                                  // 5 byte
         SDP_ATTR_UINT2(ATTR_ID_SUPPORTED_FEATURES,  AG_SUPPORTED_FEATURES_ATT), //6 bytes
 #endif
@@ -312,7 +312,7 @@ const uint8_t wiced_app_cfg_sdp_record[] =
         SDP_ATTR_ID(ATTR_ID_BT_PROFILE_DESC_LIST), SDP_ATTR_SEQUENCE_1(8),
             SDP_ATTR_SEQUENCE_1(6),
                 SDP_ATTR_UUID16(UUID_SERVCLASS_HF_HANDSFREE),
-                SDP_ATTR_VALUE_UINT2(0x0108),
+                SDP_ATTR_VALUE_UINT2(0x0109),
         SDP_ATTR_SERVICE_NAME(15),
             'W', 'I', 'C', 'E', 'D', ' ', 'H', 'F', ' ', 'D', 'E', 'V', 'I', 'C', 'E',
         SDP_ATTR_UINT2(ATTR_ID_SUPPORTED_FEATURES, SUPPORTED_FEATURES_ATT),
